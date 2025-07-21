@@ -16,9 +16,9 @@ class RearcPipelineStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, environment: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        bucket_name = "Dev-DataLake" if environment == "dev" else "Prod-DataLake"
+        bucket_name = "rearc-dev-datalake" if environment == "dev" else "rearc-prod-datalake"
 
-        bucket = s3.Bucket.from_bucket_name(self, "DataLake", bucket_name=bucket_name)
+        bucket = s3.Bucket.from_bucket_name(self, "datalake", bucket_name=bucket_name)
 
         queue = sqs.Queue(
             self, "IngestToReportQueue",
