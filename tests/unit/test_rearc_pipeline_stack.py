@@ -2,14 +2,24 @@ import aws_cdk as core
 import aws_cdk.assertions as assertions
 
 from rearc_pipeline.rearc_pipeline_stack import RearcPipelineStack
+from cicd_pipeline_stack import CICDPipelineStack
 
-# example tests. To run these tests, uncomment this file along with the example
-# resource in rearc_pipeline/rearc_pipeline_stack.py
 def test_sqs_queue_created():
     app = core.App()
-    stack = RearcPipelineStack(app, "rearc-pipeline")
+    stack = RearcPipelineStack(app, "TestStack")
     template = assertions.Template.from_stack(stack)
+    template.has_resource_properties("AWS::SQS::Queue", {
+        "VisibilityTimeout": 300
+    })
 
-#     template.has_resource_properties("AWS::SQS::Queue", {
-#         "VisibilityTimeout": 300
-#     })
+def test_rearc_pipeline_stack():
+    app = core.App()
+    stack = RearcPipelineStack(app, "TestStack")
+    template = assertions.Template.from_stack(stack)
+    template.has_resource("AWS::S3::Bucket")
+
+def test_cicd_pipeline_stack():
+    app = core.App()
+    stack = CICDPipelineStack(app, "TestPipelineStack")
+    template = assertions.Template.from_stack(stack)
+    template.has_resource("AWS::CodePipeline::Pipeline")
