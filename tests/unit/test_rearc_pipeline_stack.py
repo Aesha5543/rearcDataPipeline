@@ -20,10 +20,12 @@ def test_stack_resources(environment, expected_bucket_name):
 
 
     lambdas = template.find_resources("AWS::Lambda::Function", Match.object_like({
-        "Handler": "handler.main",
-        "Environment": {
-            "Variables": {
-                "BUCKET_NAME": expected_bucket_name
+        "Properties": {
+            "Handler": "handler.main",
+            "Environment": {
+                "Variables": {
+                    "BUCKET_NAME": expected_bucket_name
+                }
             }
         }
     }))
