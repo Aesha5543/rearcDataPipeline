@@ -88,29 +88,31 @@ class RearcPipelineStack(Stack):
             lambda_events.SqsEventSource(queue)
         )
 
-        failure_topic = sns.Topic(self, "LambdaFailureTopic")
+        if environment == "dev":
 
-        failure_topic.add_subscription(subscriptions.EmailSubscription("aeshabhatt5543@google.com"))
+            failure_topic = sns.Topic(self, "LambdaFailureTopic")
 
-        ingest_errors_alarm = cloudwatch.Alarm(
-            self, f"IngestLambdaErrorsAlarm{environment}",
-            metric=ingest_fn.metric_errors(),
-            threshold=1,
-            evaluation_periods=1,
-            alarm_description="Alarm if ingest lambda fails",
-            alarm_name="IngestLambdaErrorsAlarm",
-            treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
-        )
-        ingest_errors_alarm.add_alarm_action(cloudwatch_actions.SnsAction(failure_topic))
+            failure_topic.add_subscription(subscriptions.EmailSubscription("aeshabhatt5543@google.com"))
 
-        report_errors_alarm = cloudwatch.Alarm(
-            self, f"ReportLambdaErrorsAlarm{environment}",
-            metric=report_fn.metric_errors(),
-            threshold=1,
-            evaluation_periods=1,
-            alarm_description="Alarm if report lambda fails",
-            alarm_name="ReportLambdaErrorsAlarm",
-            treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
-        )
-        report_errors_alarm.add_alarm_action(cloudwatch_actions.SnsAction(failure_topic))
+            ingest_errors_alarm = cloudwatch.Alarm(
+                self, f"IngestLambdaErrorsAlarm{environment}",
+                metric=ingest_fn.metric_errors(),
+                threshold=1,
+                evaluation_periods=1,
+                alarm_description="Alarm if ingest lambda fails",
+                alarm_name="IngestLambdaErrorsAlarm",
+                treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
+            )
+            ingest_errors_alarm.add_alarm_action(cloudwatch_actions.SnsAction(failure_topic))
+
+            report_errors_alarm = cloudwatch.Alarm(
+                self, f"ReportLambdaErrorsAlarm{environment}",
+                metric=report_fn.metric_errors(),
+                threshold=1,
+                evaluation_periods=1,
+                alarm_description="Alarm if report lambda fails",
+                alarm_name="ReportLambdaErrorsAlarm",
+                treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
+            )
+            report_errors_alarm.add_alarm_action(cloudwatch_actions.SnsAction(failure_topic))
 

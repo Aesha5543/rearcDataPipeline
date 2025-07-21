@@ -1,58 +1,115 @@
+Rearc Pipeline AWS Data Engineering Project
 
-# Welcome to your CDK Python project!
+This project is an AWS CDK-based data pipeline that:
+- Syncs open BLS (Bureau of Labor Statistics) data to an S3 bucket
+- Fetches US population data via an external API and uploads it to S3
+- Processes and analyzes this data with AWS Lambda functions
+- Uses SQS to trigger analytics processing after ingestion
+- Implements monitoring with CloudWatch alarms and SNS email notifications
 
-This is a blank project for CDK development with Python.
+Project Structure
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+rearc-pipeline/
+│
+├── lambda_fns/
+│   │
+│   ├── ingest/           # Lambda function to ingest data (sync BLS, load population)
+│   │   └── handler.py
+│   │
+│   ├── report/           # Lambda function for analytics and reporting
+│   │   └── handler.py
+│
+├── lambda_layer/         # Lambda layer with dependencies (beautifulsoup4, requests, etc.)
+│
+├── rearc_pipeline/
+│   └── rearc_pipeline_stack.py  # CDK stack definition
+│
+├── stages/                # CDK stages folder
+│   ├── dev_stage.py       # CDK stack for Dev environment stage
+│   └── prod_stage.py      # CDK stack for Prod environment stage
+│
+├── cicd_pipeline_stack.py  # CDK stack for CI/CD pipeline
+│
+├── tests/
+│   └── unit/
+│       ├── test_lambda_ingest_handler.py
+│       ├── test_lambda_report_handler.py
+│       └── test_rearc_pipeline_stack.py
+│
+├── app.py                 # CDK app entrypoint
+├── README.md              # This file
+├── requirement-dev.txt    # Additional or dev-specific Python dependencies
+└── requirements.txt       # Core Python dependencies
 
-This project is set up like a standard Python project.  The initialization
-process also creates a virtualenv within this project, stored under the `.venv`
-directory.  To create the virtualenv it assumes that there is a `python3`
-(or `python` for Windows) executable in your path with access to the `venv`
-package. If for any reason the automatic creation of the virtualenv fails,
-you can create the virtualenv manually.
+---
 
-To manually create a virtualenv on MacOS and Linux:
+Prerequisites
 
-```
-$ python3 -m venv .venv
-```
+- Python 3.9+
+- Node.js 16+ (for AWS CDK CLI)
+- AWS CLI configured with permissions to deploy resources
+- AWS CDK Toolkit installed globally (npm install -g aws-cdk)
 
-After the init process completes and the virtualenv is created, you can use the following
-step to activate your virtualenv.
+---
 
-```
-$ source .venv/bin/activate
-```
+Setup & Deployment
 
-If you are a Windows platform, you would activate the virtualenv like this:
+1. Clone repository:
+   git clone https://github.com/Aesha5543/rearcDataPipeline.git
+   cd rearc-pipeline
 
-```
-% .venv\Scripts\activate.bat
-```
+2. Create and activate Python virtual environment:
+   python3 -m venv rearcvenv
+   source rearcvenv/bin/activate
 
-Once the virtualenv is activated, you can install the required dependencies.
+3. Install Python dependencies:
+   pip install -r requirements.txt
 
-```
-$ pip install -r requirements.txt
-```
+4. Bootstrap AWS CDK (run once per AWS environment):
+   cdk bootstrap aws://<ACCOUNT_ID>/<REGION>
 
-At this point you can now synthesize the CloudFormation template for this code.
+5. Deploy stack for your environment (dev or prod):
+   cdk deploy
 
-```
-$ cdk synth
-```
+---
 
-To add additional dependencies, for example other CDK libraries, just add
-them to your `setup.py` file and rerun the `pip install -r requirements.txt`
-command.
+Running Unit Tests
 
-## Useful commands
+Run unit tests locally using pytest:
+   pytest tests/unit
 
- * `cdk ls`          list all stacks in the app
- * `cdk synth`       emits the synthesized CloudFormation template
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk docs`        open CDK documentation
+---
 
-Enjoy!
+CI/CD Pipeline Overview
+
+- Automated pipeline pulls code from GitHub repository
+- Runs unit tests on every commit
+- Deploys infrastructure and Lambda functions to Dev and Prod environments
+- Uses AWS Secrets Manager for managing GitHub tokens and credentials
+- Manual approval before Prod deployment
+
+---
+
+Managing Secrets
+
+Store sensitive values like GitHub tokens securely using AWS Secrets Manager:
+   aws secretsmanager create-secret --name github-token --secret-string "<your-github-token>"
+
+---
+
+Cleanup
+
+Remove all deployed resources:
+   cdk destroy --context environment=dev
+
+---
+
+Notes
+
+- Lambda Layers package external dependencies for faster deployment and smaller function code
+- CloudWatch alarms monitor Lambda failures and send SNS email notifications to the configured address
+- S3 event notifications trigger ingestion workflows only when relevant files (e.g., population JSON) are updated
+
+---
+
+If you need help or want to contribute, feel free to reach out!
