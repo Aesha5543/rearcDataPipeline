@@ -3,14 +3,11 @@ import os
 import pytest
 from unittest.mock import patch, MagicMock
 
+# Set environment variable for testing
 with patch.dict(os.environ, {"BUCKET_NAME": "test-bucket"}):
-    from lambda_fns.ingest import handler 
+    from lambda_fns.ingest import handler
 
-# @pytest.fixture(autouse=True)
-# def patch_bucket_env():
-#     with patch.dict(os.environ, {"BUCKET_NAME": "test-bucket"}):
-#         yield
-
+# Test for loading population data to S3
 @patch("lambda_fns.ingest.handler.requests.get")
 @patch("lambda_fns.ingest.handler.s3")
 def test_load_population_to_s3(mock_s3, mock_get):
@@ -24,6 +21,7 @@ def test_load_population_to_s3(mock_s3, mock_get):
     assert kwargs["Bucket"] == "test-bucket"
     assert kwargs["Key"] == "datausa/acs_population.json"
 
+# Test for syncing BLS file when it's new
 @patch("lambda_fns.ingest.handler.requests.get")
 @patch("lambda_fns.ingest.handler.s3")
 def test_sync_bls_new_file(mock_s3, mock_get):
@@ -39,6 +37,7 @@ def test_sync_bls_new_file(mock_s3, mock_get):
     assert success
     mock_s3.put_object.assert_called_once()
 
+# Test for Lambda main handler with both components succeeding
 @patch("lambda_fns.ingest.handler.sync_bls", return_value=True)
 @patch("lambda_fns.ingest.handler.load_population_to_s3", return_value=True)
 def test_main_success(mock_pop, mock_bls):

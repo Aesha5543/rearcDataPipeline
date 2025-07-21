@@ -1,115 +1,121 @@
-Rearc Pipeline AWS Data Engineering Project
+# Rearc Pipeline AWS Data Engineering Project
+
+A robust, modular data pipeline built on AWS, designed to automate infrastructure, streamline data ingestion, power analytics, and ensure operational excellence.
+
+## 🚀 Overview
 
 This project is an AWS CDK-based data pipeline that:
-- Syncs open BLS (Bureau of Labor Statistics) data to an S3 bucket
-- Fetches US population data via an external API and uploads it to S3
-- Processes and analyzes this data with AWS Lambda functions
-- Uses SQS to trigger analytics processing after ingestion
-- Implements monitoring with CloudWatch alarms and SNS email notifications
 
-Project Structure
+- Syncs open BLS (Bureau of Labor Statistics) data to Amazon S3
+- Fetches US population data from an external API and uploads it to S3
+- Processes and analyzes data with AWS Lambda functions
+- Triggers analytics processing via SQS messages after ingestion
+- Monitors pipeline health and failures with CloudWatch alarms and SNS notifications
+
+## 🗂️ Project Structure
 
 rearc-pipeline/
 │
 ├── lambda_fns/
-│   │
-│   ├── ingest/           # Lambda function to ingest data (sync BLS, load population)
-│   │   └── handler.py
-│   │
-│   ├── report/           # Lambda function for analytics and reporting
-│   │   └── handler.py
+│ ├── ingest/ # Lambda: data ingestion (BLS sync, population load)
+│ │ └── handler.py
+│ └── report/ # Lambda: analytics & reporting
+│ └── handler.py
 │
-├── lambda_layer/         # Lambda layer with dependencies (beautifulsoup4, requests, etc.)
+├── lambda_layer/ # Shared dependencies: beautifulsoup4, requests, etc.
 │
 ├── rearc_pipeline/
-│   └── rearc_pipeline_stack.py  # CDK stack definition
+│ └── rearc_pipeline_stack.py # CDK stack definition
 │
-├── stages/                # CDK stages folder
-│   ├── dev_stage.py       # CDK stack for Dev environment stage
-│   └── prod_stage.py      # CDK stack for Prod environment stage
+├── stages/
+│ ├── dev_stage.py # Development environment stage
+│ └── prod_stage.py # Production environment stage
 │
-├── cicd_pipeline_stack.py  # CDK stack for CI/CD pipeline
+├── cicd_pipeline_stack.py # CDK stack for CI/CD pipeline
 │
 ├── tests/
-│   └── unit/
-│       ├── test_lambda_ingest_handler.py
-│       ├── test_lambda_report_handler.py
-│       └── test_rearc_pipeline_stack.py
+│ └── unit/
+│ ├── test_lambda_ingest_handler.py
+│ ├── test_lambda_report_handler.py
+│ └── test_rearc_pipeline_stack.py
 │
-├── app.py                 # CDK app entrypoint
-├── README.md              # This file
-├── requirement-dev.txt    # Additional or dev-specific Python dependencies
-└── requirements.txt       # Core Python dependencies
+├── app.py # CDK app entrypoint
+├── README.md # This documentation file
+├── requirement-dev.txt # Dev-specific Python dependencies
+└── requirements.txt # Core Python dependencies
 
----
 
-Prerequisites
+## 🛠️ Prerequisites
 
-- Python 3.9+
-- Node.js 16+ (for AWS CDK CLI)
-- AWS CLI configured with permissions to deploy resources
-- AWS CDK Toolkit installed globally (npm install -g aws-cdk)
+- Python **3.9+**
+- Node.js **16+** (for AWS CDK CLI)
+- Configured AWS CLI with deployment permissions
+- AWS CDK Toolkit (`npm install -g aws-cdk`)
 
----
+## ⚡ Getting Started
 
-Setup & Deployment
+1. **Clone the repository**
+    ```
+    git clone https://github.com/Aesha5543/rearcDataPipeline.git
+    cd rearc-pipeline
+    ```
 
-1. Clone repository:
-   git clone https://github.com/Aesha5543/rearcDataPipeline.git
-   cd rearc-pipeline
+2. **Set up your environment**
+    ```
+    python3 -m venv rearcvenv
+    source rearcvenv/bin/activate
+    ```
 
-2. Create and activate Python virtual environment:
-   python3 -m venv rearcvenv
-   source rearcvenv/bin/activate
+3. **Install dependencies**
+    ```
+    pip install -r requirements.txt
+    ```
 
-3. Install Python dependencies:
-   pip install -r requirements.txt
+4. **Bootstrap AWS CDK**
+    ```
+    cdk bootstrap aws://<ACCOUNT_ID>/<REGION>
+    ```
 
-4. Bootstrap AWS CDK (run once per AWS environment):
-   cdk bootstrap aws://<ACCOUNT_ID>/<REGION>
+5. **Deploy the pipeline**
+    ```
+    cdk deploy
+    ```
 
-5. Deploy stack for your environment (dev or prod):
-   cdk deploy
+## 🧪 Running Unit Tests
 
----
+- Run all unit tests locally with:
+    ```
+    pytest tests/unit
+    ```
+- Coverage includes Lambda handlers and CDK stack/resource definitions.
 
-Running Unit Tests
+## 🔁 CI/CD Pipeline
 
-Run unit tests locally using pytest:
-   pytest tests/unit
+- Pulls the latest code from GitHub
+- Executes automated unit tests on every commit
+- Deploys infrastructure and Lambda functions to Dev & Prod environments
+- Manages credentials (GitHub tokens via Secrets Manager)
+- Manual approval is required before production deployment
 
----
+## 🔒 Secrets Management
 
-CI/CD Pipeline Overview
+- Store sensitive secrets (e.g., GitHub tokens) securely:
+    ```
+    aws secretsmanager create-secret --name github-token --secret-string "<your-github-token>"
+    ```
 
-- Automated pipeline pulls code from GitHub repository
-- Runs unit tests on every commit
-- Deploys infrastructure and Lambda functions to Dev and Prod environments
-- Uses AWS Secrets Manager for managing GitHub tokens and credentials
-- Manual approval before Prod deployment
+## 🧹 Cleanup
 
----
+To destroy all deployed resources for a specific environment:
+    ```
+    cdk destroy
+    ```
 
-Managing Secrets
 
-Store sensitive values like GitHub tokens securely using AWS Secrets Manager:
-   aws secretsmanager create-secret --name github-token --secret-string "<your-github-token>"
+## 🌟 Additional Notes
 
----
+- Lambda Layers are used to package external dependencies, speeding up deployment and keeping Lambda bundles small
+- CloudWatch alarms monitor Lambda failures and notify via SNS email
+- S3 event notifications trigger ingestion Lambda only when specific files (e.g., population JSON) are updated
 
-Cleanup
-
-Remove all deployed resources:
-   cdk destroy --context environment=dev
-
----
-
-Notes
-
-- Lambda Layers package external dependencies for faster deployment and smaller function code
-- CloudWatch alarms monitor Lambda failures and send SNS email notifications to the configured address
-- S3 event notifications trigger ingestion workflows only when relevant files (e.g., population JSON) are updated
-
----
-
-If you need help or want to contribute, feel free to reach out!
+_For questions, help, or contributions, please reach out!_

@@ -18,7 +18,7 @@ def test_stack_resources(environment, expected_bucket_name):
         "VisibilityTimeout": 310
     })
 
-
+    # Check Lambda exists
     lambdas = template.find_resources("AWS::Lambda::Function", Match.object_like({
         "Properties": {
             "Handler": "handler.main",

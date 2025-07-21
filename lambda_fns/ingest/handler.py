@@ -6,8 +6,10 @@ import hashlib
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
+# Initialize boto3 S3 client
 s3 = boto3.client("s3")
 
+# Environment variables and constants
 BUCKET = os.environ.get("BUCKET_NAME")
 BLS_URL = "https://download.bls.gov/pub/time.series/pr/"
 POP_URL = "https://honolulu-api.datausa.io/tesseract/data.jsonrecords?cube=acs_yg_total_population_1&drilldowns=Year%2CNation&locale=en&measures=Population"
@@ -16,7 +18,12 @@ POP_S3_KEY = "datausa/acs_population.json"
 HEADERS = {
     "User-Agent": "Pipeline/1.0 (contact: stackjerry@google.com)"
 }
+
 def sync_bls():
+    """
+    Sync BLS files from the remote HTTP server to S3 bucket,
+    uploading new or changed files, and deleting removed files.
+    """
     try:
         def list_s3_objects(bucket, prefix=""):
             paginator = s3.get_paginator("list_objects_v2")
@@ -65,6 +72,7 @@ def sync_bls():
                 r.raise_for_status()
                 md5 = get_md5(r.content)
 
+                # Upload new or updated files only
                 if s3_key not in s3_files:
                     print(f"Uploading new file: {fname}")
                     s3.put_object(Bucket=BUCKET, Key=s3_key, Body=r.content)
@@ -74,6 +82,7 @@ def sync_bls():
                 else:
                     print(f"✅ Up-to-date: {fname}")
 
+            # Delete files from S3 that are no longer present remotely
             remote_keys = set(BLS_PREFIX + fname for fname in remote_files)
             for key in s3_files:
                 if key not in remote_keys:
@@ -86,6 +95,9 @@ def sync_bls():
         return False
 
 def load_population_to_s3():
+    """
+    Fetch population data JSON from API and upload it as JSON to S3.
+    """
     try:
         response = requests.get(POP_URL)
         response.raise_for_status()
@@ -99,6 +111,10 @@ def load_population_to_s3():
         return False
 
 def main(event, context):
+    """
+    Lambda entrypoint: runs BLS sync and population data load sequentially,
+    returns combined status.
+    """
     bls_result = sync_bls()
     pop_result = load_population_to_s3()
     status_code = 200 if bls_result and pop_result else 500

@@ -7,7 +7,6 @@ import re
 
 s3 = boto3.client("s3")
 BUCKET = os.environ["BUCKET_NAME"]
-# BUCKET = "rearcpipelinestack-datalakee54831b2-q3plxvm7xk5x"
 
 PR_KEY = "bls-data/pr.data.0.Current"
 POP_KEY = "datausa/acs_population.json"
@@ -89,7 +88,3 @@ def main(event, context):
         })
     }
     return response
-
-# if __name__ == "__main__":
-#     result = main()
-#     print(json.dumps(result, indent=2))
