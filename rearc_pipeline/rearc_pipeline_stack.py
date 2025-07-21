@@ -7,7 +7,11 @@ from aws_cdk import (
     aws_s3_notifications as s3n,
     aws_events as events,
     aws_events_targets as targets,
-    aws_lambda_event_sources as lambda_events
+    aws_lambda_event_sources as lambda_events,
+    aws_sns as sns,
+    aws_sns_subscriptions as subscriptions,
+    aws_cloudwatch as cloudwatch,
+    aws_cloudwatch_actions as cloudwatch_actions
 )
 from constructs import Construct
 
@@ -74,8 +78,39 @@ class RearcPipelineStack(Stack):
         rule.add_target(targets.LambdaFunction(ingest_fn))
 
         notification = s3n.SqsDestination(queue)
-        bucket.add_event_notification(s3.EventType.OBJECT_CREATED_PUT, notification)
+        bucket.add_event_notification(
+            s3.EventType.OBJECT_CREATED_PUT, 
+            notification,
+            s3.NotificationKeyFilter(prefix="datausa/acs_population.json")
+        )
 
         report_fn.add_event_source(
             lambda_events.SqsEventSource(queue)
         )
+
+        failure_topic = sns.Topic(self, "LambdaFailureTopic", topic_name="LambdaFailureNotifications")
+
+        failure_topic.add_subscription(subscriptions.EmailSubscription("aeshabhatt5543@google.com"))
+
+        ingest_errors_alarm = cloudwatch.Alarm(
+            self, "IngestLambdaErrorsAlarm",
+            metric=ingest_fn.metric_errors(),
+            threshold=1,
+            evaluation_periods=1,
+            alarm_description="Alarm if ingest lambda fails",
+            alarm_name="IngestLambdaErrorsAlarm",
+            treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
+        )
+        ingest_errors_alarm.add_alarm_action(cloudwatch_actions.SnsAction(failure_topic))
+
+        report_errors_alarm = cloudwatch.Alarm(
+            self, "ReportLambdaErrorsAlarm",
+            metric=report_fn.metric_errors(),
+            threshold=1,
+            evaluation_periods=1,
+            alarm_description="Alarm if report lambda fails",
+            alarm_name="ReportLambdaErrorsAlarm",
+            treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
+        )
+        report_errors_alarm.add_alarm_action(cloudwatch_actions.SnsAction(failure_topic))
+
