@@ -1,81 +1,39 @@
-from aws_cdk import Duration
-from aws_cdk import (
-    Stack,
-    aws_lambda as _lambda,
-    aws_s3 as s3,
-    aws_sqs as sqs,
-    aws_s3_notifications as s3n,
-    aws_events as events,
-    aws_events_targets as targets,
-    aws_lambda_event_sources as lambda_events
-)
-from constructs import Construct
+import pytest
+import aws_cdk as cdk
+from aws_cdk.assertions import Template, Match
+from rearc_pipeline.rearc_pipeline_stack import RearcPipelineStack
 
-class RearcPipelineStack(Stack):
+@pytest.mark.parametrize("environment,expected_bucket_name", [
+    ("dev", "rearc-dev-datalake"),
+    ("prod", "rearc-prod-datalake"),
+])
+def test_stack_resources(environment, expected_bucket_name):
+    app = cdk.App()
+    stack = RearcPipelineStack(app, f"{environment}-Test", environment=environment)
+    template = Template.from_stack(stack)
 
-    def __init__(self, scope: Construct, construct_id: str, environment: str, **kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
+    # Assert SQS Queue exists with correct visibility timeout
+    template.has_resource_properties("AWS::SQS::Queue", {
+        "VisibilityTimeout": 310
+    })
 
-        bucket_name = "rearc-dev-datalake" if environment == "dev" else "rearc-prod-datalake"
+    # Assert two Lambda functions exist (you created two)
+    template.resource_count_is("AWS::Lambda::Function", 2)
 
-        bucket = s3.Bucket.from_bucket_name(self, "datalake", bucket_name=bucket_name)
+    # Match at least one Lambda with correct environment and handler (partial match)
+    template.has_resource_properties("AWS::Lambda::Function", Match.object_like({
+        "Handler": "handler.main",
+        "Environment": Match.object_like({
+            "Variables": Match.object_like({
+                "BUCKET_NAME": expected_bucket_name
+            })
+        })
+    }))
 
-        queue = sqs.Queue(
-            self, "IngestToReportQueue",
-            visibility_timeout=Duration.seconds(310)
-        )
+    # Assert EventBridge Rule exists
+    template.has_resource_properties("AWS::Events::Rule", {
+        "ScheduleExpression": "rate(1 day)"
+    })
 
-        common_layer = _lambda.LayerVersion(
-            self, "DependenciesLayer",
-            code=_lambda.Code.from_asset("lambda_layer"),
-            compatible_runtimes=[_lambda.Runtime.PYTHON_3_9],
-            description="Layer for beautifulsoup4 and requests"
-        )
-
-        numpy_layer = _lambda.LayerVersion.from_layer_version_arn(
-            self, "NumpyPandasLayer",
-            "arn:aws:lambda:ap-south-1:336392948345:layer:AWSSDKPandas-Python39:28"
-        )
-
-        ingest_fn = _lambda.Function(
-            self, "IngestLambda",
-            runtime=_lambda.Runtime.PYTHON_3_9,
-            handler="handler.main",
-            code=_lambda.Code.from_asset("lambda_fns/ingest"),
-            timeout=Duration.minutes(5),
-            environment={
-                "BUCKET_NAME": bucket.bucket_name,
-                "QUEUE_URL": queue.queue_url
-            },
-            layers=[common_layer]
-        )
-
-        report_fn = _lambda.Function(
-            self, "ReportLambda",
-            runtime=_lambda.Runtime.PYTHON_3_9,
-            handler="handler.main",
-            code=_lambda.Code.from_asset("lambda_fns/report"),
-            timeout=Duration.minutes(5),
-            environment={
-                "BUCKET_NAME": bucket.bucket_name
-            },
-            layers=[common_layer, numpy_layer]
-        )
-
-        bucket.grant_read_write(ingest_fn)
-        bucket.grant_read(report_fn)
-        queue.grant_send_messages(ingest_fn)
-        queue.grant_consume_messages(report_fn)
-
-        rule = events.Rule(
-            self, "DailyIngestSchedule",
-            schedule=events.Schedule.rate(Duration.days(1))
-        )
-        rule.add_target(targets.LambdaFunction(ingest_fn))
-
-        notification = s3n.SqsDestination(queue)
-        bucket.add_event_notification(s3.EventType.OBJECT_CREATED_PUT, notification)
-
-        report_fn.add_event_source(
-            lambda_events.SqsEventSource(queue)
-        )
+    # Assert SQS is used as Lambda event source
+    template.resource_count_is("AWS::Lambda::EventSourceMapping", 1)
