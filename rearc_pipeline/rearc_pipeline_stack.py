@@ -88,7 +88,7 @@ class RearcPipelineStack(Stack):
             lambda_events.SqsEventSource(queue)
         )
 
-        failure_topic = sns.Topic(self, "LambdaFailureTopic", topic_name="LambdaFailureNotifications")
+        failure_topic = sns.Topic(self, "LambdaFailureTopic")
 
         failure_topic.add_subscription(subscriptions.EmailSubscription("aeshabhatt5543@google.com"))
 
