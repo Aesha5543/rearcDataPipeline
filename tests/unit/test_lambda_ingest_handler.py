@@ -39,8 +39,8 @@ def test_sync_bls_new_file(mock_s3, mock_get):
     assert success
     mock_s3.put_object.assert_called_once()
 
-@patch("lambda_code.handler.sync_bls", return_value=True)
-@patch("lambda_code.handler.load_population_to_s3", return_value=True)
+@patch("lambda_fns.ingest.handler.sync_bls", return_value=True)
+@patch("lambda_fns.ingest.handler.load_population_to_s3", return_value=True)
 def test_main_success(mock_pop, mock_bls):
     response = handler.main({}, {})
     assert response["statusCode"] == 200
