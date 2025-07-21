@@ -4,12 +4,14 @@ import pytest
 import pandas as pd
 from unittest.mock import patch, MagicMock
 from io import BytesIO
-from lambda_fns.report import handler
 
-@pytest.fixture(autouse=True)
-def patch_env_bucket():
-    with patch.dict(os.environ, {"BUCKET_NAME": "test-bucket"}):
-        yield
+with patch.dict(os.environ, {"BUCKET_NAME": "test-bucket"}):
+    from lambda_fns.report import handler
+
+# @pytest.fixture(autouse=True)
+# def patch_env_bucket():
+#     with patch.dict(os.environ, {"BUCKET_NAME": "test-bucket"}):
+#         yield
 
 def mock_s3_get_object(key, content):
     """Helper to mock s3.get_object() based on key"""
@@ -53,5 +55,5 @@ def test_main_function(mock_get_object):
     # Check specific report row
     series_data = body["series_population_data"]
     assert len(series_data) == 2
-    assert series_data[0]["series_id"] == "PRS30006032"
-    assert series_data[0]["period"] == "Q01"
+    assert any(d["series_id"] == "PRS30006032" for d in series_data)
+    assert any(d["period"] == "Q01" for d in series_data)

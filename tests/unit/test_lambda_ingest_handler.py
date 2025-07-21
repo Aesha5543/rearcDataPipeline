@@ -2,12 +2,14 @@ import json
 import os
 import pytest
 from unittest.mock import patch, MagicMock
-from lambda_fns.ingest import handler 
 
-@pytest.fixture(autouse=True)
-def patch_bucket_env():
-    with patch.dict(os.environ, {"BUCKET_NAME": "test-bucket"}):
-        yield
+with patch.dict(os.environ, {"BUCKET_NAME": "test-bucket"}):
+    from lambda_fns.ingest import handler 
+
+# @pytest.fixture(autouse=True)
+# def patch_bucket_env():
+#     with patch.dict(os.environ, {"BUCKET_NAME": "test-bucket"}):
+#         yield
 
 @patch("lambda_fns.ingest.handler.requests.get")
 @patch("lambda_fns.ingest.handler.s3")
