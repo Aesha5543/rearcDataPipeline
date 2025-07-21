@@ -15,35 +15,27 @@ This project is an AWS CDK-based data pipeline that:
 ## 🗂️ Project Structure
 
 rearc-pipeline/
-│
 ├── lambda_fns/
-│ ├── ingest/ # Lambda: data ingestion (BLS sync, population load)
-│ │ └── handler.py
-│ └── report/ # Lambda: analytics & reporting
-│ └── handler.py
-│
-├── lambda_layer/ # Shared dependencies: beautifulsoup4, requests, etc.
-│
+│   ├── ingest/                 # Lambda: data ingestion (BLS sync, population load)
+│   │   └── handler.py
+│   └── report/                 # Lambda: analytics & reporting
+│       └── handler.py
+├── lambda_layer/              # Shared dependencies: beautifulsoup4, requests, etc.
 ├── rearc_pipeline/
-│ └── rearc_pipeline_stack.py # CDK stack definition
-│
+│   └── rearc_pipeline_stack.py # CDK stack definition
 ├── stages/
-│ ├── dev_stage.py # Development environment stage
-│ └── prod_stage.py # Production environment stage
-│
-├── cicd_pipeline_stack.py # CDK stack for CI/CD pipeline
-│
+│   ├── dev_stage.py            # Development environment stage
+│   └── prod_stage.py           # Production environment stage
+├── cicd_pipeline_stack.py     # CDK stack for CI/CD pipeline
 ├── tests/
-│ └── unit/
-│ ├── test_lambda_ingest_handler.py
-│ ├── test_lambda_report_handler.py
-│ └── test_rearc_pipeline_stack.py
-│
-├── app.py # CDK app entrypoint
-├── README.md # This documentation file
-├── requirement-dev.txt # Dev-specific Python dependencies
-└── requirements.txt # Core Python dependencies
-
+│   └── unit/
+│       ├── test_lambda_ingest_handler.py
+│       ├── test_lambda_report_handler.py
+│       └── test_rearc_pipeline_stack.py
+├── app.py                     # CDK app entrypoint
+├── README.md                  # This documentation file
+├── requirements.txt           # Core Python dependencies
+└── requirement-dev.txt        # Dev-specific Python dependencies
 
 ## 🛠️ Prerequisites
 
