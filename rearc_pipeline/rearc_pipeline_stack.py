@@ -93,7 +93,7 @@ class RearcPipelineStack(Stack):
         failure_topic.add_subscription(subscriptions.EmailSubscription("aeshabhatt5543@google.com"))
 
         ingest_errors_alarm = cloudwatch.Alarm(
-            self, "IngestLambdaErrorsAlarm",
+            self, f"IngestLambdaErrorsAlarm{environment}",
             metric=ingest_fn.metric_errors(),
             threshold=1,
             evaluation_periods=1,
@@ -104,7 +104,7 @@ class RearcPipelineStack(Stack):
         ingest_errors_alarm.add_alarm_action(cloudwatch_actions.SnsAction(failure_topic))
 
         report_errors_alarm = cloudwatch.Alarm(
-            self, "ReportLambdaErrorsAlarm",
+            self, f"ReportLambdaErrorsAlarm{environment}",
             metric=report_fn.metric_errors(),
             threshold=1,
             evaluation_periods=1,
