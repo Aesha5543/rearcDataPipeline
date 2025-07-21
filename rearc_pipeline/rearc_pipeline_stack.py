@@ -1,4 +1,3 @@
-import pytest
 import aws_cdk as cdk
 from aws_cdk.assertions import Template, Match
 from rearc_pipeline.rearc_pipeline_stack import RearcPipelineStack
