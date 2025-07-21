@@ -25,7 +25,7 @@ class CICDPipelineStack(Stack):
 
         test_step = pipelines.ShellStep("RunUnitTests",
             input=source,
-            install_commands=["pip install -r requirements.txt"],
+            install_commands=["pip install -r requirements.txt", "pip install -r requirements-dev.txt"],
             commands=["pytest tests/unit"]
         )
 
